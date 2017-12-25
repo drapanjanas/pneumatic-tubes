@@ -12,7 +12,8 @@
 (def numbers (atom {}))
 
 (defn- average [numbers]
-       (double (/ (apply + numbers) (count numbers))))
+       (let [cnt (count numbers)]
+         (double (/ (apply + numbers) (if (pos? cnt) cnt 1)))))
 
 (defn- update-number! [client-id num]
        (let [nums (swap! numbers assoc client-id num)]

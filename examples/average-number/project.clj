@@ -1,11 +1,12 @@
 (defproject average-number "0.1.0-SNAPSHOT"
-            :dependencies [[org.clojure/clojure "1.9.0-alpha16"]
+            :dependencies [[org.clojure/clojure "1.9.0"]
                            [org.clojure/clojurescript "1.9.521"]
                            [reagent "0.6.1"]
                            [re-frame "0.9.2"]
                            [compojure "1.5.2"]
                            [ring "1.5.1"]
-                           [pneumatic-tubes "0.3.0"]]
+                           [pneumatic-tubes "0.3.1-SNAPSHOT"]
+                           [http-kit "2.2.0"]]
 
             :min-lein-version "2.5.3"
 
