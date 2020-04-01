@@ -1,6 +1,6 @@
-(defproject pneumatic-tubes "0.3.0"
+(defproject pneumatic-tubes "0.3.1"
   :description "WebSocket based transport of events between re-frame app and server"
-  :url "https://github.com/drapanjanas/pneumatic-tubes"
+  :url "https://github.com/rschmukler/pneumatic-tubes"
   :license {:name "Eclipse Public License"
             :url  "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.9.0-RC1"]
@@ -12,10 +12,11 @@
                  [http-kit "2.2.0" :scope "provided"]]
 
   :scm {:name "git"
-        :url  "https://github.com/drapanjanas/pneumatic-tubes"}
+        :url  "https://github.com/rschmukler/pneumatic-tubes"}
 
   :min-lein-version "2.5.3"
   :source-paths ["src/clj"]
+  :java-cmd "/usr/lib/jvm/java-8-openjdk/bin/java"
   :plugins [[lein-cljsbuild "1.1.4"]]
   :hooks [leiningen.cljsbuild]
 

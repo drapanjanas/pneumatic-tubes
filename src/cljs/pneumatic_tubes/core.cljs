@@ -6,9 +6,6 @@
 
 (def ^:private instances (atom {}))
 
-(def r (t/reader :json))
-(def w (t/writer :json))
-
 (defn log [& msg] (.log js/console (apply str msg)))
 (defn error [& msg] (.error js/console (apply str msg)))
 (defn warn [& msg] (.warn js/console (apply str msg)))
@@ -19,7 +16,10 @@
 (def default-config
   {:web-socket-impl  js/WebSocket
    :out-queue-size   10
-   :backoff-strategy (increasing-random-timeout 5000)})
+   :backoff-strategy (increasing-random-timeout 5000)
+   :read-handlers {}
+   :write-handlers {}})
+
 (defn- noop [])
 
 (defn tube
@@ -81,7 +81,7 @@
       (put! ch event-v)
       (throw (js/Error. (str "Tube for " (:url tube) " is not started!"))))))
 
-(defn- start-send-loop! [socket out-queue]
+(defn- start-send-loop! [w socket out-queue]
   (go-loop
     [event (<! out-queue)]
     (when event
@@ -96,15 +96,18 @@
    (let [param-str (str/join "&" (for [[k v] params] (str (name k) "=" v)))
          base-url (:url tube)
          {:keys [on-receive on-disconnect on-connect on-connect-failed config]} tube
-         {ws-impl :web-socket-impl queue-size :out-queue-size backoff :backoff-strategy} config
+         {ws-impl :web-socket-impl queue-size :out-queue-size backoff :backoff-strategy
+          :keys [read-handlers write-handlers]} config
          url (if (empty? param-str) base-url (str base-url "?" param-str))
-         out-queue (chan queue-size)]
+         out-queue (chan queue-size)
+         w (t/writer :json {:handlers write-handlers})
+         r (t/reader :json {:handlers read-handlers})]
      (if-let [socket (ws-impl. url)]
        (do
          (set! (.-onopen socket) (fn []
                                    (log "Created tube on " url)
                                    (mark-tube-connected! tube)
-                                   (start-send-loop! socket out-queue)
+                                   (start-send-loop! w socket out-queue)
                                    (on-connect)))
          (set! (.-onclose socket) (fn [close-event]
                                     (let [instance (get-tube-instance tube)

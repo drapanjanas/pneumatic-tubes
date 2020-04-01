@@ -22,24 +22,31 @@
    (let [in (ByteArrayInputStream. (.getBytes s *string-encoding*))]
      (t/read (t/reader in type opts)))))
 
-(defn- send-fn [ch]
+(defn- send-fn [ch opts]
   (fn [data]
     (when (open? ch)
-      (send! ch (write-str data :json)))))
+      (send! ch (write-str data :json opts)))))
 
 (defn websocket-handler
-  "Creates WebSocket request handler, use it in your compojure routes"
+  "Creates WebSocket request handler, use it in your compojure routes.
+
+  Opts includes `:read-handlers` and `:write-handlers` which will be used by transit's read
+  and write respectively."
   ([receiver]
-   (websocket-handler receiver {}))
+   (websocket-handler receiver {} {}))
   ([receiver tube-data]
-   (fn [request]
-     (with-channel
-       request ch
-       (let [tube-id (add-tube! (send-fn ch) tube-data)]
-         (on-close ch (fn [_]
-                        (let [destroyed-tube (get-tube tube-id)]
-                          (rm-tube! tube-id)
-                          (receive receiver destroyed-tube [:tube/on-destroy]))))
-         (on-receive ch (fn [message]
-                          (receive receiver (get-tube tube-id) (read-str message :json))))
-         (receive receiver (get-tube tube-id) [:tube/on-create]))))))
+   (websocket-handler receiver tube-data {}))
+  ([receiver tube-data opts]
+   (let [{:keys [read-handlers
+                 write-handlers]} opts]
+     (fn [request]
+       (with-channel
+         request ch
+         (let [tube-id (add-tube! (send-fn ch {:handlers write-handlers}) tube-data)]
+           (on-close ch (fn [_]
+                          (let [destroyed-tube (get-tube tube-id)]
+                            (rm-tube! tube-id)
+                            (receive receiver destroyed-tube [:tube/on-destroy]))))
+           (on-receive ch (fn [message]
+                            (receive receiver (get-tube tube-id) (read-str message :json {:handlers read-handlers}))))
+           (receive receiver (get-tube tube-id) [:tube/on-create])))))))
